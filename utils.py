@@ -1,5 +1,7 @@
 import os
 import cv2
+import math
+from PIL import Image
 import torch
 from torch.utils.data import Dataset  # from xxx import yyy, 是导入具体的类
 import torch.nn as nn  # import xxx 或 import xxx as yyy, 是导入模块（或者说目录），具体的类或者函数，要进一步在使用的时候yyy.zzz来使用
@@ -25,7 +27,8 @@ class DirectDataset(Dataset):
         ## 问题3，在这个层面的class的操作，就比较随意了
         for degree, label in degrees_label_map.items():
             for file in os.listdir(os.path.join(root_path, degree)):
-                img = cv2.imread(os.path.join(root_path, degree, file))
+                # img = cv2.imread(os.path.join(root_path, degree, file))
+                img = Image.open(os.path.join(root_path, degree, file))
                 self.dataset.append((img, label))
     
     def __len__(self):  # 只有__init__和__getitem__是必须overwrite的
@@ -80,3 +83,50 @@ class Classifier(nn.Module):
         out = self.fc3(x)
         
         return out  # logits, (-inf, inf), 表示待送入sigmoid或者softmax的raw网络输出https://stackoverflow.com/questions/41455101/what-is-the-meaning-of-the-word-logits-in-tensorflow
+
+    
+
+
+class NewPad(object):
+    def __init__(self, fill=0, padding_mode='constant', new_w=256, new_h=256):
+        # assert isinstance(fill, (numbers.Number, str, tuple))
+        assert padding_mode in ['constant', 'edge', 'reflect', 'symmetric']
+
+        self.fill = fill
+        self.padding_mode = padding_mode
+        self.new_w = new_w
+        self.new_h = new_h
+        
+    def __call__(self, img):
+        """
+        Args:
+            img (PIL Image): Image to be padded.
+
+        Returns:
+            PIL Image: Padded image.
+        """
+        temp =  F.pad(img, self.get_padding(img, self.new_w, self.new_h), mode=self.padding_mode, value=self.fill)
+        # print(temp.shape)
+        
+        return temp
+    
+    def __repr__(self):
+        return self.__class__.__name__ + '(padding={0}, fill={1}, padding_mode={2})'.\
+            format(self.fill, self.padding_mode)
+    
+    def get_padding(self, image, new_w, new_h):    
+        # print(type(image), image.shape)
+        _, h, w = image.shape
+        # max_wh = np.max([w, h])
+        # h_padding = (max_wh - w) / 2
+        # v_padding = (max_wh - h) / 2
+        h_padding = math.ceil((new_w - w) / 2)  # 1/2 --->1
+        v_padding = math.ceil((new_h - h) / 2)
+        
+        l_pad = h_padding
+        t_pad = v_padding
+        r_pad = new_w - w - l_pad
+        b_pad = new_h - h - t_pad
+        padding = (int(l_pad), int(r_pad), int(t_pad), int(b_pad))
+        # print(l_pad, t_pad, r_pad, b_pad, new_h, new_w, w, h)
+        return padding

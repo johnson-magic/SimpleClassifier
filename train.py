@@ -11,7 +11,7 @@ import onnxruntime as ort
 import numpy as np
 from math import ceil
 import onnxruntime as ort
-from utils import DirectDataset, Classify_Task, Classifier
+from utils import DirectDataset, Classify_Task, Classifier, NewPad
 # # SimpleClassifier
 
 # ## data
@@ -44,15 +44,17 @@ from utils import DirectDataset, Classify_Task, Classifier
 root_path = r"../../../autodl-tmp/direction_dataset/"
 # transform
 ## 减均值，除以方差，rgb2bgr, to_tensor, 这些应该来讲torch中都有，悟2：有了就使用，无了就继承
-transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                            torchvision.transforms.Resize((256, 256)),
+transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), NewPad(new_w=256, new_h=256),
+                                            # torchvision.transforms.Resize((256, 256)),
                                             torchvision.transforms.Normalize(mean = [0, 0, 0], std= [1, 1, 1]),
                                             ])  # 这里，应该再增加一个pad_resize到256，先直接resize吧
-transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                            torchvision.transforms.Resize((256, 256)),
+transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), NewPad(new_w=256, new_h=256),
+                                            # torchvision.transforms.Resize((256, 256)),
                                             torchvision.transforms.Normalize(mean = [0, 0, 0], std= [1, 1, 1]),
                                             ])  # 这里，应该再增加一个pad_resize到256，先直接resize吧
 direct_dataset = DirectDataset(root_path, transform)  # 问题，如何将区分trainval呢？
+
+
 train_dataloader = DataLoader(direct_dataset, batch_size=8, shuffle=True)
 val_dataloader = DataLoader(direct_dataset, batch_size=8, shuffle=False) # 这里偷了一个懒
         
@@ -62,10 +64,10 @@ classifier.to(device="cuda")  # 两移动：model和data(注：包含image和lab
 classifier_task = Classify_Task(classifier)
 
 optimizer = optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)  # optimizer四板斧1：构造
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3, 8], gamma=0.1)  # optimizer其实就是solver, solvers/optimizers
+scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 80], gamma=0.1)  # optimizer其实就是solver, solvers/optimizers
 # optimizer四板斧: 1构造；2清零；3执行; 4调整学习率
 
-epoches = 10
+epoches = 100
 for epoch in range(epoches):
     total_iter_num = ceil(len(direct_dataset) / train_dataloader.batch_size)
     # print(len(next(iter(train_dataloader)))) # , len(next(iter(train_dataloader))))

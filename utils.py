@@ -43,14 +43,19 @@ class Classify_Task(object):
     
     def __call__(self, imgs, targets=None):
         if targets is None:  # inference
-            return self.classifier(imgs)
+            outs = self.classifier(imgs)
+            probs = F.softmax(outs, dim=1)  # (B, C)  # 体会到了F.softmax是表示函数，可以直接用；nn.Softmax是类，需要先构建，再使用
+            predictions = torch.argmax(probs, dim=1)  # (B)
+            return predictions
+            
         else:  # train
             outs = self.classifier(imgs)
             loss = self.loss(outs, targets)
             return loss
     
     def export(self, model_path):
-        torch.onnx.export(model, (torch.randn(4, 3, 32, 64),), model_path, input_names=["input"], dynamo=True)
+        torch.onnx.export(self.classifier, (torch.randn(8, 3, 256, 256, device=next(self.classifier.parameters()).device),), model_path, input_names=["input"], dynamic_axes={'input' : {0 : 'batch_size'}})  # (动态batch) https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html
+        # torch.onnx.export(self.classifier, (torch.randn(8, 3, 256, 256, device=next(self.classifier.parameters()).device),), model_path, input_names=["input"], dynamo=True) # , dynamo=True)
 
 class Classifier(nn.Module):
     def __init__(self, num_classes):

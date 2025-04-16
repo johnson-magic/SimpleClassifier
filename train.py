@@ -7,7 +7,10 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
+import onnxruntime as ort
+import numpy as np
 from math import ceil
+import onnxruntime as ort
 from utils import DirectDataset, Classify_Task, Classifier
 # # SimpleClassifier
 
@@ -59,10 +62,10 @@ classifier.to(device="cuda")  # 两移动：model和data(注：包含image和lab
 classifier_task = Classify_Task(classifier)
 
 optimizer = optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)  # optimizer四板斧1：构造
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 80], gamma=0.1)  # optimizer其实就是solver, solvers/optimizers
+scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3, 8], gamma=0.1)  # optimizer其实就是solver, solvers/optimizers
 # optimizer四板斧: 1构造；2清零；3执行; 4调整学习率
 
-epoches = 100
+epoches = 10
 for epoch in range(epoches):
     total_iter_num = ceil(len(direct_dataset) / train_dataloader.batch_size)
     # print(len(next(iter(train_dataloader)))) # , len(next(iter(train_dataloader))))
@@ -81,24 +84,55 @@ for epoch in range(epoches):
     scheduler.step()  # optimizer四板斧4： 执行学习率调整
     print(f"Epoch: {epoch}/{epoches}, loss: {loss}")
 
-# # evaluation
-# predictions = []
-# labels = []
-# for image, label in next(iter(val_dataloader)):
-#     prediction = classifier(image)
+# evaluation
+classifier.eval()
+predictions = []
+labels = []
+for i, (image, label) in enumerate(iter(val_dataloader)):
+    image, label = image.to(device="cuda"), label.to(device="cuda")
+    prediction = classifier_task(image)
     
-#     predictions.extend(prediction)
-#     labels.extend(label)
+    predictions.extend(list(prediction.cpu().numpy()))
+    labels.extend(list(label.cpu().numpy()))
 
-# acc = torch.sum(torch.where(predictions == labels)) / labels.numel()
-# print(f"Acc: {acc}")    
+acc = np.sum(np.array(predictions) == np.array(labels)) / len(labels)
+print(f"Acc: {acc}")    
 
 
 # # export
 # ## save pth
-# torch.save(classifier.state_dict(), "save.pth")
-# ## export pth
-# classifier.export("save.pt")
+torch.save(classifier.state_dict(), "save.pth")
+
+classifier_loaded = Classifier(num_classes=4)
+classifier_loaded.load_state_dict(torch.load("save.pth", weights_only=True))  #  map_location=torch.device("cuda")，并非是指model在cuda上的意思
+classifier_loaded.to("cuda")
+classifier_loaded.eval()
+classifier_task_loaded = Classify_Task(classifier_loaded)
+predictions = []
+labels = []
+for i, (image, label) in enumerate(iter(val_dataloader)):
+    image, label = image.to(device="cuda"), label.to(device="cuda")
+    prediction = classifier_task_loaded(image)
+    
+    predictions.extend(list(prediction.cpu().numpy()))
+    labels.extend(list(label.cpu().numpy()))
+
+acc = np.sum(np.array(predictions) == np.array(labels)) / len(labels)
+
+print(f"Acc by loaded model: {acc}")
+
+# export pth
+classifier_task.export("save.onnx")
+
+ort_sess = ort.InferenceSession('save.onnx')
+for i, (image, label) in enumerate(iter(val_dataloader)):
+    outputs = ort_sess.run(None, {'input': image.numpy()})
+    predictions.extend(list(outputs[0].argmax(1)))
+    labels.extend(list(label.cpu().numpy()))
+acc = np.sum(np.array(predictions) == np.array(labels)) / len(labels)
+print(f"Acc by loaded model: {acc}")
+
+
 
 
 

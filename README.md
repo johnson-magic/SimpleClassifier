@@ -1,27 +1,73 @@
 # SimpleClassifier
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
-## data
+<!-- code_chunk_output -->
+
+- [SimpleClassifier](#simpleclassifier)
+  - [1. pipeline](#1-pipeline)
+    - [1.1 data](#11-data)
+    - [1.2 model](#12-model)
+    - [1.3 forward(similar with model)](#13-forwardsimilar-with-model)
+    - [1.4 loss](#14-loss)
+    - [1.5 backward](#15-backward)
+    - [1.6 weight/bias update](#16-weightbias-update)
+    - [1.7 metric](#17-metric)
+    - [1.8 export](#18-export)
+  - [2.0 dataset](#20-dataset)
+
+<!-- /code_chunk_output -->
+
+
+
+## 1. pipeline
+
+### 1.1 data
 * dataset
     * transform
 * dataloader
 
-## model
+### 1.2 model
 * backbone
 
-## forward(similar with model)
+### 1.3 forward(similar with model)
 
-## loss
+### 1.4 loss
 * ce loss
 
-## backward
+### 1.5 backward
 * backward
 
-## weight/bias update
+### 1.6 weight/bias update
 * optimizer
 * sgd
 
 
-## metric
+### 1.7 metric
 
-## export
+### 1.8 export
+
+## 2.0 dataset
+
+* [text direction classify dataset](https://pan.quark.cn/s/99b30d0f1244)
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center">
+
+  <div style="width: 22%">
+    <img src="./imgs/0.bmp" style="width: 48%; height: auto">
+  </div>
+
+  <div style="width: 22%">
+    <img src="./imgs/90.bmp" style="width: auto; height: 70%">
+  </div>
+
+  <div style="width: 22%">
+    <img src="./imgs/180.bmp" style="width: auto; height: 70%">
+  </div>
+
+  <div style="width: 22%">
+    <img src="./imgs/270.bmp" style="width: auto; height: 70%">
+  </div>
+
+</div>
+
 

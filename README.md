@@ -49,25 +49,6 @@
 ## 2.0 dataset
 
 * [text direction classify dataset](https://pan.quark.cn/s/99b30d0f1244)
-
-<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center">
-
-  <div style="width: 22%">
-    <img src="./imgs/0.bmp" style="width: 48%; height: auto">
-  </div>
-
-  <div style="width: 22%">
-    <img src="./imgs/90.bmp" style="width: auto; height: 70%">
-  </div>
-
-  <div style="width: 22%">
-    <img src="./imgs/180.bmp" style="width: auto; height: 70%">
-  </div>
-
-  <div style="width: 22%">
-    <img src="./imgs/270.bmp" style="width: auto; height: 70%">
-  </div>
-
-</div>
+<img src="./imgs/text_direction_classify_dataset.bmp">
 
 

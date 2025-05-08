@@ -13,7 +13,7 @@ develop-eggs/
 dist/
 downloads/
 eggs/
-.eggs/
+.eggs/https://github.com/johnson-magic/SimpleClassifier.git
 lib/
 lib64/
 parts/

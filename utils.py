@@ -57,7 +57,7 @@ class Classify_Task(object):
             return loss
     
     def export(self, model_path):
-        torch.onnx.export(self.classifier, (torch.randn(8, 3, 256, 256, device=next(self.classifier.parameters()).device),), model_path, input_names=["input"], dynamic_axes={'input' : {0 : 'batch_size'}})  # (动态batch) https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html
+        torch.onnx.export(self.classifier, (torch.randn(8, 3, 256, 256, device=next(self.classifier.parameters()).device),), model_path, input_names=["input"], dynamic_axes={'input' : {0 : 'batch_size'}}, opset_version=15)  # (动态batch) https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html
         # torch.onnx.export(self.classifier, (torch.randn(8, 3, 256, 256, device=next(self.classifier.parameters()).device),), model_path, input_names=["input"], dynamo=True) # , dynamo=True)
 
 class Classifier(nn.Module):

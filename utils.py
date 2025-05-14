@@ -1,6 +1,7 @@
 import os
 import cv2
 import math
+import random
 from PIL import Image
 import torch
 from torch.utils.data import Dataset  # from xxx import yyy, 是导入具体的类
@@ -11,11 +12,11 @@ class DirectDataset(Dataset):
     """继承自基类
     加载---》处理---》供使用
     """
-    def __init__(self, root_path, transform, target_transform=None):
+    def __init__(self, root_path, img_transform=None, joint_transform=None):
         super().__init__()
         self.dataset = []
-        self.transform = transform
-        self.target_transform = target_transform
+        self.img_transform = img_transform
+        self.joint_transform = joint_transform
         
         # images_path = os.path.join(root_path, "images")
         # labels_path = os.path.join(root_path, "labels")
@@ -37,7 +38,14 @@ class DirectDataset(Dataset):
     def __getitem__(self, idx):
         # return self.transform(self.dataset[idx][0]), self.target_transform(self.dataset[idx][1])  # 很多情形下，target的transform是随着img的变换而变换，如何做呢？
         # return (self.transform(self.dataset[idx][0]), torch.tensor(self.dataset[idx][1], dtype=torch.long))  # 什么时候，数据应该放到cuda上呢？还有模型？
-        return self.transform(self.dataset[idx][0]), self.dataset[idx][1]
+        image, label = self.dataset[idx][0], self.dataset[idx][1]
+        
+        # 依次进行joint_transform、img_transform
+        if self.joint_transform:
+            image, label = self.joint_transform(image, label)
+        if self.img_transform:
+            image = self.img_transform(image)
+        return image, label
 
 class Classify_Task(object):
     def __init__(self, classifier, loss=nn.CrossEntropyLoss()):
@@ -130,3 +138,24 @@ class NewPad(object):
         padding = (int(l_pad), int(r_pad), int(t_pad), int(b_pad))
         # print(l_pad, t_pad, r_pad, b_pad, new_h, new_w, w, h)
         return padding
+
+class RandomRotate(object):
+    def __init__(self, random_angles=[0, 90, 180, 270]):
+        self.random_angles = random_angles
+    
+    def __call__(self, image, label):
+        angle = random.choices(self.random_angles)
+        if angle == 0:
+            return image, label  # 原图不旋转
+        elif angle == 90:
+            image = image.transpose(Image.ROTATE_270)  # 逆时针旋转270度相当于顺时针旋转90度
+        elif angle == 180:
+            image = img.transpose(Image.ROTATE_180)
+        elif angle == 270:
+            image = img.transpose(Image.ROTATE_90)
+        else:
+            raise ValueError("only support 0/90/180/270 degree")
+        
+        label = int(((label * 90 + angle) % 360) / 90)
+        
+        return image, label
